@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Class Queue</title>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin: 5px; }
+  </style>
+</head>
+<body>
+  <h1>📚 Class Queue</h1>
+
+  <input id="name" placeholder="Your name" />
+  <input id="note" placeholder="Private note to teacher (optional)" />
+  <button onclick="addToQueue()">Join Queue</button>
+
+  <h2>📝 Queue</h2>
+  <ol id="queueList"></ol>
+
+  <script>
+    const queue = JSON.parse(localStorage.getItem("queue") || "[]");
+    const teacherMode = new URLSearchParams(window.location.search).get("teacher") === "true";
+
+    function renderQueue() {
+      const list = document.getElementById("queueList");
+      list.innerHTML = "";
+      queue.forEach((entry) => {
+        const li = document.createElement("li");
+        li.textContent = entry.name;
+        if (teacherMode && entry.note) {
+          const note = document.createElement("div");
+          note.textContent = "🔒 Note: " + entry.note;
+          note.style.fontSize = "0.9em";
+          note.style.color = "gray";
+          li.appendChild(note);
+        }
+        list.appendChild(li);
+      });
+    }
+
+    function addToQueue() {
+      const name = document.getElementById("name").value.trim();
+      const note = document.getElementById("note").value.trim();
+      if (!name) return alert("Please enter your name.");
+      queue.push({ name, note });
+      localStorage.setItem("queue", JSON.stringify(queue));
+      renderQueue();
+    }
+
+    renderQueue();
+  </script>
+</body>
+</html>
