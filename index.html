@@ -4,8 +4,12 @@
   <title>Class Queue</title>
   <meta charset="UTF-8" />
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input, button { margin: 5px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, button { margin: 5px; padding: 8px; font-size: 1em; }
+    button { cursor: pointer; }
+    li { margin-bottom: 10px; }
+    .note { font-size: 0.9em; color: gray; }
+    .remove-btn { margin-left: 10px; font-size: 0.8em; }
   </style>
 </head>
 <body>
@@ -25,18 +29,43 @@
     function renderQueue() {
       const list = document.getElementById("queueList");
       list.innerHTML = "";
-      queue.forEach((entry) => {
+      queue.forEach((entry, i) => {
         const li = document.createElement("li");
         li.textContent = entry.name;
+
         if (teacherMode && entry.note) {
           const note = document.createElement("div");
           note.textContent = "🔒 Note: " + entry.note;
-          note.style.fontSize = "0.9em";
-          note.style.color = "gray";
+          note.className = "note";
           li.appendChild(note);
         }
+
+        if (teacherMode) {
+          const removeBtn = document.createElement("button");
+          removeBtn.textContent = "❌ Remove";
+          removeBtn.className = "remove-btn";
+          removeBtn.onclick = () => {
+            queue.splice(i, 1);
+            localStorage.setItem("queue", JSON.stringify(queue));
+            renderQueue();
+          };
+          li.appendChild(removeBtn);
+        }
+
         list.appendChild(li);
       });
+
+      if (teacherMode && queue.length > 0) {
+        const clearBtn = document.createElement("button");
+        clearBtn.textContent = "🧼 Clear Entire Queue";
+        clearBtn.onclick = () => {
+          if (confirm("Clear the entire queue?")) {
+            localStorage.removeItem("queue");
+            renderQueue();
+          }
+        };
+        document.body.appendChild(clearBtn);
+      }
     }
 
     function addToQueue() {
@@ -45,6 +74,8 @@
       if (!name) return alert("Please enter your name.");
       queue.push({ name, note });
       localStorage.setItem("queue", JSON.stringify(queue));
+      document.getElementById("name").value = "";
+      document.getElementById("note").value = "";
       renderQueue();
     }
 
