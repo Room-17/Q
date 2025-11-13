@@ -9,6 +9,7 @@
     button { cursor: pointer; }
     li { margin-bottom: 10px; }
     .note { font-size: 0.9em; color: gray; }
+    .timestamp { font-size: 0.8em; color: #666; margin-top: 4px; }
     .remove-btn { margin-left: 10px; font-size: 0.8em; }
   </style>
 </head>
@@ -23,15 +24,28 @@
   <ol id="queueList"></ol>
 
   <script>
-    const queue = JSON.parse(localStorage.getItem("queue") || "[]");
     const teacherMode = new URLSearchParams(window.location.search).get("teacher") === "true";
 
+    function formatTime(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleString();
+    }
+
     function renderQueue() {
+      const queue = JSON.parse(localStorage.getItem("queue") || "[]");
+      queue.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
       const list = document.getElementById("queueList");
       list.innerHTML = "";
+
       queue.forEach((entry, i) => {
         const li = document.createElement("li");
         li.textContent = entry.name;
+
+        const time = document.createElement("div");
+        time.textContent = "🕒 Joined: " + formatTime(entry.timestamp);
+        time.className = "timestamp";
+        li.appendChild(time);
 
         if (teacherMode && entry.note) {
           const note = document.createElement("div");
@@ -45,8 +59,9 @@
           removeBtn.textContent = "❌ Remove";
           removeBtn.className = "remove-btn";
           removeBtn.onclick = () => {
-            queue.splice(i, 1);
-            localStorage.setItem("queue", JSON.stringify(queue));
+            const updatedQueue = JSON.parse(localStorage.getItem("queue") || "[]");
+            updatedQueue.splice(i, 1);
+            localStorage.setItem("queue", JSON.stringify(updatedQueue));
             renderQueue();
           };
           li.appendChild(removeBtn);
@@ -55,9 +70,10 @@
         list.appendChild(li);
       });
 
-      if (teacherMode && queue.length > 0) {
+      if (teacherMode && queue.length > 0 && !document.getElementById("clearBtn")) {
         const clearBtn = document.createElement("button");
         clearBtn.textContent = "🧼 Clear Entire Queue";
+        clearBtn.id = "clearBtn";
         clearBtn.onclick = () => {
           if (confirm("Clear the entire queue?")) {
             localStorage.removeItem("queue");
@@ -72,8 +88,11 @@
       const name = document.getElementById("name").value.trim();
       const note = document.getElementById("note").value.trim();
       if (!name) return alert("Please enter your name.");
-      queue.push({ name, note });
+
+      const queue = JSON.parse(localStorage.getItem("queue") || "[]");
+      queue.push({ name, note, timestamp: new Date().toISOString() });
       localStorage.setItem("queue", JSON.stringify(queue));
+
       document.getElementById("name").value = "";
       document.getElementById("note").value = "";
       renderQueue();
